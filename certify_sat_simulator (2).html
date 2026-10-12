@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certify - English Practice Module</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter (Simple, standard web font) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Basic standard scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #999; }
+    
+    /* Highlighter for text */
+    .bluebook-highlight { background-color: #fef08a !important; color: #000 !important; cursor: pointer; }
+    .bluebook-highlight:hover { background-color: #fde047 !important; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased min-h-screen flex flex-col font-sans select-none">
+
+  <div id="toast" class="fixed top-5 right-5 z-[150] transition-all duration-300 transform -translate-y-24 opacity-0 pointer-events-none max-w-sm border p-4 flex items-center gap-3 bg-white text-black border-gray-300 shadow-md rounded">
+    <div id="toast-message" class="text-sm font-semibold">Ready</div>
+  </div>
+
+  <!-- VIEW 1: MINIMALIST HOMEPAGE -->
+  <div id="view-home" class="flex-1 flex flex-col items-center justify-start p-4 sm:p-8">
+    <div class="w-full max-w-2xl bg-white border border-gray-300 shadow-sm p-6 sm:p-10 space-y-8 text-gray-800 rounded">
+      
+      <div class="border-b border-gray-200 pb-4">
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Bring Your Own File Module</p>
+        <h1 class="text-3xl font-bold text-black">Set up your practice</h1>
+      </div>
+
+      <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-900 text-sm p-4 rounded-r">
+        <strong>Important Disclaimer:</strong> Export your PDF from the Question Bank <em>without</em> the correct answers or rationale included. You will self-verify your answers against the key at the end of the test.
+      </div>
+
+      <!-- 1. SUBJECT SECTION (VERTICAL STACK, ENGLISH ONLY) -->
+      <div class="space-y-3">
+        <h2 class="font-semibold text-black text-lg">1. Select Subject</h2>
+        <div class="flex flex-col gap-3">
+          <div class="p-5 border-2 border-black bg-gray-50 rounded text-left shadow-inner">
+            <div class="font-bold text-black text-lg">Reading and Writing</div>
+            <div class="text-sm text-gray-600 mt-1">Multiple choice questions. Text parsing optimized for English passages.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="space-y-3">
+          <h2 class="font-semibold text-black text-lg">2. Question Count</h2>
+          <div class="flex gap-2">
+            <button onclick="setQuestionCount(22)" id="btn-qc-22" class="flex-1 py-2 px-3 bg-black text-white rounded font-medium text-sm border border-black">22</button>
+            <button onclick="setQuestionCount(15)" id="btn-qc-15" class="flex-1 py-2 px-3 bg-white text-gray-700 hover:bg-gray-100 rounded border border-gray-300 font-medium text-sm">15</button>
+            <button onclick="setQuestionCount(10)" id="btn-qc-10" class="flex-1 py-2 px-3 bg-white text-gray-700 hover:bg-gray-100 rounded border border-gray-300 font-medium text-sm">10</button>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <h2 class="font-semibold text-black text-lg">3. Timer Mode</h2>
+          <div class="flex gap-2">
+            <button onclick="setPacingMode('standard')" id="btn-pace-standard" class="flex-1 py-2 px-3 bg-black text-white rounded font-medium text-sm border border-black">Standard</button>
+            <button onclick="setPacingMode('drill')" id="btn-pace-drill" class="flex-1 py-2 px-3 bg-white text-gray-700 hover:bg-gray-100 rounded border border-gray-300 font-medium text-sm">Drill</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. UPLOAD BOX -->
+      <div class="space-y-3">
+        <h2 class="font-semibold text-black text-lg">4. Add your questions</h2>
+        
+        <label id="ingest-box-pdf" ondragover="event.preventDefault(); this.classList.add('border-black','bg-gray-100')" ondragleave="this.classList.remove('border-black','bg-gray-100')" ondrop="handlePDFDrop(event)" class="block border-2 border-dashed border-gray-400 hover:border-black rounded p-8 text-center cursor-pointer transition-colors bg-gray-50">
+          <input type="file" id="pdf-file-input" accept="application/pdf" class="hidden" onchange="handlePDFSelected(this.files)" />
+          <i data-lucide="upload" class="w-8 h-8 mx-auto mb-2 text-gray-600"></i>
+          <h4 id="pdf-upload-title" class="font-bold text-black text-base">Click to upload or drag PDF here</h4>
+          <p id="pdf-upload-subtitle" class="text-sm text-gray-500 mt-1">Use College Board English PDF exports</p>
+          
+          <div id="pdf-parsing-spinner" class="hidden mt-4 items-center justify-center gap-2 text-sm font-semibold text-black">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Extracting Text...
+          </div>
+          <div id="pdf-stats-badge" class="hidden mt-4 text-sm font-bold text-green-800 bg-green-100 px-3 py-1.5 rounded inline-block">
+            <span id="pdf-stats-text">0 questions detected</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-gray-200">
+        <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-700">
+          <input type="checkbox" id="chk-shuffle-questions" class="w-4 h-4 rounded border-gray-300 text-black focus:ring-black accent-black" />
+          <span>Shuffle questions</span>
+        </label>
+        
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button onclick="loadDefaultPresetSample()" class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-gray-700 text-sm font-medium transition-colors">Use sample data</button>
+          <button id="btn-launch-main" onclick="launchTestSession()" class="px-6 py-2 rounded bg-black hover:bg-gray-800 text-white text-sm font-bold transition-colors">Start Practice</button>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-6 border-t border-gray-200 flex items-center justify-center sm:justify-start gap-4 text-sm text-gray-600">
+        <div class="w-14 h-14 bg-gray-200 rounded-full overflow-hidden shrink-0 border border-gray-300">
+          <!-- AUTHOR IMAGE -->
+          <img src="sanjo-photo.jpg" alt="Sanjo Yadav" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100/e2e8f0/64748b?text=SY'" />
+        </div>
+        <div>
+          <p class="text-black">Created by <strong>Sanjo Yadav</strong></p>
+          <p><a href="mailto:sanjoyadav270@gmail.com" class="hover:text-black hover:underline transition-colors text-blue-600">sanjoyadav270@gmail.com</a></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- VIEW 2: EXAM INTERFACE (Single Column, Large Text) -->
+  <div id="view-exam" class="hidden flex-1 flex flex-col h-screen overflow-hidden bg-white">
+    <header class="bg-gray-100 border-b border-gray-300 text-black h-14 px-4 sm:px-6 flex items-center justify-between select-none shrink-0 z-40">
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <span class="text-sm font-bold tracking-tight uppercase">Reading & Writing</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <div class="bg-white border border-gray-300 px-3 py-1 rounded flex items-center space-x-2 shadow-sm">
+          <i data-lucide="clock" class="w-4 h-4 text-gray-500"></i>
+          <span id="exam-timer-display" class="font-mono text-sm font-bold">22:00</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button onclick="highlightSelection()" class="text-sm font-semibold text-yellow-600 hover:text-yellow-700 hover:underline flex items-center gap-1"><i data-lucide="highlighter" class="w-4 h-4"></i><span class="hidden sm:inline">Highlight</span></button>
+        <button onclick="confirmExitTest()" class="text-sm font-bold text-red-600 hover:underline ml-2">Exit</button>
+      </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center custom-scrollbar bg-white">
+      <!-- Centered, readable layout -->
+      <div class="w-full max-w-3xl pb-24 space-y-6">
+        
+        <div class="flex items-center justify-between border-b border-gray-300 pb-3">
+          <h2 id="exam-q-num-label" class="text-2xl font-bold text-black">Question 1</h2>
+          <button id="btn-flag-toggle" onclick="toggleFlagReview()" class="flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-black px-3 py-1.5 rounded border border-gray-300 bg-gray-50 transition"><i id="flag-marker-icon" data-lucide="bookmark" class="w-4 h-4"></i><span id="flag-marker-text" class="hidden sm:inline">Mark for Review</span></button>
+        </div>
+
+        <!-- Large, readable flow text -->
+        <div id="exam-passage-text" class="text-[17px] sm:text-[19px] text-gray-900 leading-relaxed space-y-4 select-text pt-2"></div>
+        <div id="exam-prompt-text" class="text-[17px] sm:text-[19px] font-semibold text-black leading-relaxed select-text mt-4"></div>
+        
+        <!-- MCQ Options (Stacked directly below) -->
+        <div id="exam-mcq-wrap" class="space-y-3 pt-6"></div>
+
+      </div>
+    </div>
+
+    <footer class="bg-gray-100 border-t border-gray-300 h-16 px-4 sm:px-6 flex items-center justify-between select-none shrink-0 z-40 relative">
+      <button id="btn-exam-back" onclick="changeQuestion(-1)" class="px-5 py-2 rounded border border-gray-400 bg-white hover:bg-gray-50 text-sm font-bold text-black flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"><i data-lucide="chevron-left" class="w-4 h-4"></i> Back</button>
+      
+      <div class="relative" id="navigator-wrapper">
+        <button id="btn-navigator-toggle" onclick="toggleNavigatorDrawer()" class="px-5 py-2 bg-white hover:bg-gray-50 text-black text-sm font-bold rounded border border-gray-400 flex items-center gap-2"><span>Question <span id="nav-indicator-current">1</span> of <span id="nav-indicator-total">22</span></span><i id="nav-drawer-caret" data-lucide="chevron-up" class="w-4 h-4"></i></button>
+        <div id="navigator-drawer" class="hidden absolute bottom-14 left-1/2 -translate-x-1/2 w-[340px] bg-white border border-gray-300 shadow-xl rounded p-4 z-50 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-gray-200 text-sm font-bold">Question Navigator</div>
+          <div id="navigator-buttons-grid" class="grid grid-cols-5 gap-2 max-h-56 overflow-y-auto p-1 custom-scrollbar"></div>
+          <div class="pt-2 border-t border-gray-200"><button onclick="handleNavigatorFinishClick()" class="w-full py-2 bg-black text-white text-sm font-bold rounded hover:bg-gray-800">Finish Test</button></div>
+        </div>
+      </div>
+      
+      <button id="btn-exam-next" onclick="changeQuestion(1)" class="px-6 py-2 rounded bg-black hover:bg-gray-800 text-white text-sm font-bold flex items-center gap-2"><span id="label-next-btn-text">Next</span> <i id="icon-next-btn" data-lucide="chevron-right" class="w-4 h-4"></i></button>
+    </footer>
+  </div>
+
+  <!-- VIEW 3: RESULTS -->
+  <div id="view-results" class="hidden flex-1 flex flex-col min-h-screen bg-gray-50">
+    <header class="bg-white border-b border-gray-300 h-16 px-4 sm:px-8 flex items-center justify-between shadow-sm">
+      <span class="font-bold text-lg text-black">Practice Results</span>
+      <button onclick="returnToSetupScreen()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-black text-sm font-bold rounded border border-gray-300">New Test</button>
+    </header>
+    <main class="flex-1 max-w-4xl mx-auto w-full p-4 sm:p-8 space-y-6">
+      <div class="bg-white border border-gray-300 rounded p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <h2 class="text-2xl font-bold text-black">Module Complete</h2>
+        <div class="flex gap-4 w-full md:w-auto text-center">
+          <div class="px-4 py-2 border border-gray-200 rounded bg-gray-50"><div id="stat-total-q" class="text-xl font-bold text-black">22</div><div class="text-xs text-gray-500 uppercase">Total Qs</div></div>
+          <div class="px-4 py-2 border border-gray-200 rounded bg-gray-50"><div id="stat-answered-q" class="text-xl font-bold text-black">20</div><div class="text-xs text-gray-500 uppercase">Answered</div></div>
+          <div class="px-4 py-2 border border-gray-200 rounded bg-gray-50"><div id="stat-time-spent" class="text-xl font-bold text-black">21:40</div><div class="text-xs text-gray-500 uppercase">Time</div></div>
+        </div>
+      </div>
+      
+      <div class="bg-white border border-gray-300 rounded overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+          <h3 class="font-bold text-black text-sm">Self-Verification Log</h3>
+          <div class="flex gap-3 text-sm font-bold"><span id="self-tally-correct" class="text-green-700">0 Correct</span><span id="self-tally-wrong" class="text-red-700">0 Wrong</span></div>
+        </div>
+        <div id="log-entries-container" class="divide-y divide-gray-200"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal-confirm-submit" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded w-full max-w-md p-6 space-y-4 shadow-2xl">
+      <h3 class="font-bold text-center text-xl">Submit Test?</h3>
+      <p class="text-center text-gray-600 text-sm">Are you sure you want to finish and review your answers?</p>
+      <div class="grid grid-cols-2 gap-3 pt-4">
+        <button onclick="toggleModal('modal-confirm-submit', false)" class="py-2.5 bg-gray-200 font-bold rounded">Go Back</button>
+        <button onclick="finishTestAndLog()" class="py-2.5 bg-black text-white font-bold rounded">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    const App = {
+      questionCount: 22, pacingMode: 'standard', 
+      loadedFileQuestions: [], activeTestQuestions: [], currentIndex: 0, 
+      userAnswers: {}, dwellTimes: {}, selfVerification: {},
+      timerInterval: null, secondsRemaining: 32 * 60
+    };
+
+    const PRESETS = {
+      rw: [ { id: 'cb_rw_201', passage: 'Text 1\nThe rapid advancement of public-key systems shifted the paradigm.\n\nText 2\nWhile mathematically elegant, implementation details matter most.', prompt: 'Based on the texts, how would the author of Text 2 view the paradigm shift?', choices: { 'A': 'By arguing it is obsolete.', 'B': 'By pointing out math is insufficient without careful implementation.', 'C': 'By suggesting it applies only to hardware.', 'D': 'By claiming it has never been deployed.' } } ]
+    };
+
+    // Clean Extractor purely optimized for English Text
+    async function extractTextFromPDF(pdf) {
+        let fullText = '';
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            
+            // Sort items top-to-bottom, left-to-right to ensure sentences don't scramble
+            textContent.items.sort((a, b) => {
+                if (Math.abs(b.transform[5] - a.transform[5]) > 5) return b.transform[5] - a.transform[5];
+                return a.transform[4] - b.transform[4];
+            });
+
+            let pageText = '';
+            let lastY = -1;
+            let lastX = -1;
+
+            for (let i = 0; i < textContent.items.length; i++) {
+                const item = textContent.items[i];
+                if (!item.str || item.str.trim() === '') continue;
+
+                const currentY = item.transform[5];
+                const currentX = item.transform[4];
+
+                if (lastY !== -1 && Math.abs(currentY - lastY) > 5) {
+                    pageText += '\n'; // New Line
+                } else if (lastX !== -1 && (currentX - lastX) > 2) {
+                    pageText += ' '; // Gap detected, add space
+                }
+
+                pageText += item.str;
+                lastY = currentY;
+                lastX = currentX + item.width;
+            }
+            fullText += pageText + '\n\n';
+        }
+        return fullText;
+    }
+
+    function cleanExtractedText(raw) {
+      if (!raw) return '';
+      let text = raw.replace(/\u00a0/g, ' ').replace(/\r\n|\r/g, '\n');
+      text = text.replace(/Page\s+\d+\s+of\s+\d+/gi, '').replace(/Assessment\s+SAT[^\n]*/gi, '');
+      // Fix broken apostrophes common in English passages
+      text = text.replace(/([a-zA-Z0-9])\s+'\s+([sStT])/g, "$1'$2"); 
+      // Fix hyphenated word breaks at the end of lines
+      text = text.replace(/([a-zA-Z]+)-\s*\n\s*([a-zA-Z]+)/g, "$1$2");
+      return text.trim();
+    }
+
+    // Bulletproof English parser using strict A) B) C) D) choice extraction
+    function parseRawQuestionBankText(raw) {
+        if (!raw || !raw.trim()) return [];
+        let text = cleanExtractedText(raw);
+        let blocks = text.split(/(?=(?:Question ID:\s*|ID:\s*)[a-zA-Z0-9_-]+)/i);
+        if (blocks.length <= 1) blocks = text.split(/(?=\n\s*(?:Question\s+\d+|Q\d+[:.]|Question\b))/i);
+        
+        const results = [];
+        for (let i = 0; i < blocks.length; i++) {
+            let block = blocks[i].trim();
+            if (block.length < 25) continue;
+
+            let qId = `Q_${i + 1}`;
+            const idMatch = block.match(/(?:Question ID:\s*|ID:\s*)([a-zA-Z0-9_-]+)/i);
+            if (idMatch) qId = idMatch[1].trim();
+
+            // Strip metadata
+            let cleanBlock = block;
+            cleanBlock = cleanBlock.replace(/(?:Question ID:\s*|ID:\s*)[a-zA-Z0-9_-]+/gi, '');
+            cleanBlock = cleanBlock.replace(/Correct Answer\s*:?[\s\S]*/gi, '');
+            cleanBlock = cleanBlock.replace(/Rationale\s*:?[\s\S]*/gi, '');
+            cleanBlock = cleanBlock.replace(/Domain:\s*[^\n]+/gi, '');
+            cleanBlock = cleanBlock.replace(/Skill:\s*[^\n]+/gi, '');
+            cleanBlock = cleanBlock.replace(/Difficulty:\s*[^\n]+/gi, '');
+            cleanBlock = cleanBlock.replace(/^\s*Question\s*\d*\s*/i, '');
+            cleanBlock = cleanBlock.replace(/^\s*Question\b\s*/i, '');
+            cleanBlock = cleanBlock.trim();
+
+            // Isolate Choices strictly by A. B. C. D. at the start of a line
+            const choices = {};
+            const choiceRegex = /(?:^|\n)\s*([A-D])[\.\)]\s*([\s\S]*?)(?=(?:\n\s*[A-D][\.\)]|$))/gi;
+            let cMatch;
+            let firstChoiceIndex = cleanBlock.length;
+            
+            while ((cMatch = choiceRegex.exec(cleanBlock)) !== null) {
+                if (cMatch.index < firstChoiceIndex) firstChoiceIndex = cMatch.index;
+                choices[cMatch[1].toUpperCase()] = cMatch[2].trim();
+            }
+
+            // Everything before the first choice is the Passage + Prompt
+            let passageAndPrompt = cleanBlock.substring(0, firstChoiceIndex).trim();
+            
+            // Try to split passage from prompt (Prompt is usually the last sentence or paragraph)
+            let passage = '';
+            let prompt = passageAndPrompt;
+            
+            const paragraphSplit = passageAndPrompt.split(/\n\n+/);
+            if (paragraphSplit.length > 1) {
+                prompt = paragraphSplit.pop().trim();
+                passage = paragraphSplit.join('\n\n').trim();
+            }
+
+            // Only add questions that successfully parsed multiple choices (Safety check)
+            if (Object.keys(choices).length >= 2) {
+                results.push({ 
+                    id: qId, 
+                    passage: passage, 
+                    prompt: prompt, 
+                    choices: choices 
+                });
+            }
+        }
+        return results;
+    }
+
+    function setQuestionCount(count) {
+      App.questionCount = count;
+      ['22', '15', '10'].forEach(num => {
+        document.getElementById(`btn-qc-${num}`).className = Number(num) === count ? 'flex-1 py-2 px-3 bg-black text-white rounded font-medium text-sm border border-black' : 'flex-1 py-2 px-3 bg-white text-gray-700 hover:bg-gray-100 rounded border border-gray-300 font-medium text-sm';
+      });
+    }
+    
+    function setPacingMode(mode) {
+      App.pacingMode = mode;
+      ['drill', 'standard'].forEach(m => {
+        document.getElementById(`btn-pace-${m}`).className = m === mode ? 'flex-1 py-2 px-3 bg-black text-white rounded font-medium text-sm border border-black' : 'flex-1 py-2 px-3 bg-white text-gray-700 hover:bg-gray-100 rounded border border-gray-300 font-medium text-sm';
+      });
+    }
+
+    function handlePDFDrop(e) { e.preventDefault(); document.getElementById('ingest-box-pdf').classList.remove('border-black', 'bg-gray-100'); if (e.dataTransfer.files) handlePDFSelected(e.dataTransfer.files); }
+
+    async function handlePDFSelected(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      const spinner = document.getElementById('pdf-parsing-spinner');
+      const badge = document.getElementById('pdf-stats-badge');
+      badge.classList.add('hidden'); spinner.classList.remove('hidden'); spinner.classList.add('flex');
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        
+        const rawText = await extractTextFromPDF(pdf);
+        const parsed = parseRawQuestionBankText(rawText);
+        
+        if (parsed.length > 0) {
+          App.loadedFileQuestions = parsed;
+          document.getElementById('pdf-stats-text').textContent = `${parsed.length} questions ready`;
+          badge.classList.remove('hidden');
+          showToast(`Ingested ${parsed.length} questions successfully.`);
+        } else {
+            showToast("No standard markers found. Loaded sample.");
+            loadDefaultPresetSample();
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error processing PDF.");
+      } finally {
+        spinner.classList.add('hidden'); spinner.classList.remove('flex');
+      }
+    }
+
+    function loadDefaultPresetSample() {
+      App.loadedFileQuestions = JSON.parse(JSON.stringify(PRESETS.rw));
+      showToast("Loaded English Sample Data");
+    }
+
+    function launchTestSession() {
+      if (!App.loadedFileQuestions.length) loadDefaultPresetSample();
+      
+      let questionsToUse = JSON.parse(JSON.stringify(App.loadedFileQuestions));
+      if (document.getElementById('chk-shuffle-questions')?.checked) questionsToUse.sort(() => Math.random() - 0.5);
+      
+      App.activeTestQuestions = questionsToUse.slice(0, App.questionCount);
+      App.currentIndex = 0;
+      App.activeTestQuestions.forEach(q => { App.userAnswers[q.id] = { answer: '', flagged: false }; App.dwellTimes[q.id] = 0; App.selfVerification[q.id] = null; });
+      
+      document.getElementById('view-home').classList.add('hidden');
+      document.getElementById('view-results').classList.add('hidden');
+      document.getElementById('view-exam').classList.remove('hidden');
+      
+      initExamTimer(); renderQuestion(); renderNavigatorGrid();
+    }
+
+    function initExamTimer() {
+      clearInterval(App.timerInterval);
+      App.secondsRemaining = App.pacingMode === 'drill' ? App.questionCount * 60 : 32 * 60;
+      updateTimerUI();
+      App.timerInterval = setInterval(() => {
+        if (App.activeTestQuestions[App.currentIndex]) App.dwellTimes[App.activeTestQuestions[App.currentIndex].id]++;
+        if (App.secondsRemaining > 0) { App.secondsRemaining--; updateTimerUI(); } 
+        else { clearInterval(App.timerInterval); finishTestAndLog(); }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      const display = document.getElementById('exam-timer-display');
+      display.textContent = `${String(Math.floor(App.secondsRemaining / 60)).padStart(2, '0')}:${String(App.secondsRemaining % 60).padStart(2, '0')}`;
+    }
+
+    function renderQuestion() {
+      const q = App.activeTestQuestions[App.currentIndex];
+      if (!q) return;
+      const resp = App.userAnswers[q.id];
+
+      document.getElementById('exam-q-num-label').textContent = `Question ${App.currentIndex + 1}`;
+      document.getElementById('nav-indicator-current').textContent = App.currentIndex + 1;
+      document.getElementById('nav-indicator-total').textContent = App.activeTestQuestions.length;
+      
+      const flagIcon = document.getElementById('flag-marker-icon');
+      if(resp.flagged) { flagIcon.classList.add('fill-black', 'text-black'); flagIcon.classList.remove('text-gray-400'); } 
+      else { flagIcon.classList.add('text-gray-400'); flagIcon.classList.remove('fill-black', 'text-black'); }
+
+      const passageBox = document.getElementById('exam-passage-text');
+      if (q.passage && q.passage.trim()) {
+        passageBox.innerHTML = q.passage.split(/\n\n+/).map(p => `<p>${escapeHTML(p)}</p>`).join('');
+        passageBox.classList.remove('hidden');
+      } else passageBox.classList.add('hidden');
+
+      document.getElementById('exam-prompt-text').innerHTML = escapeHTML(q.prompt).replace(/\n/g, '<br>');
+
+      renderMCQOptions(q, resp);
+      
+      document.getElementById('btn-exam-back').disabled = (App.currentIndex === 0);
+      document.getElementById('label-next-btn-text').textContent = (App.currentIndex === App.activeTestQuestions.length - 1) ? "Finish" : "Next";
+    }
+
+    function renderMCQOptions(q, resp) {
+      const container = document.getElementById('exam-mcq-wrap');
+      container.innerHTML = '';
+      ['A', 'B', 'C', 'D'].forEach(letter => {
+        if (!q.choices || !q.choices[letter]) return;
+        const isSelected = resp.answer === letter;
+        const card = document.createElement('div');
+        card.className = `flex items-start gap-4 p-5 rounded border cursor-pointer transition ${isSelected ? 'bg-gray-100 border-black' : 'bg-white border-gray-300 hover:border-gray-400'}`;
+        card.onclick = () => { resp.answer = isSelected ? '' : letter; renderQuestion(); renderNavigatorGrid(); };
+        card.innerHTML = `<div class="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 ${isSelected ? 'border-black bg-black text-white' : 'border-gray-300 text-gray-700'}">${letter}</div><div class="flex-1 text-[17px] sm:text-[19px] text-gray-800 leading-relaxed whitespace-pre-line">${escapeHTML(q.choices[letter])}</div>`;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleFlagReview() { App.userAnswers[App.activeTestQuestions[App.currentIndex].id].flagged = !App.userAnswers[App.activeTestQuestions[App.currentIndex].id].flagged; renderQuestion(); renderNavigatorGrid(); }
+    
+    function changeQuestion(d) {
+      if (App.currentIndex + d >= 0 && App.currentIndex + d < App.activeTestQuestions.length) { App.currentIndex += d; renderQuestion(); document.getElementById('view-exam').querySelector('.flex-1.overflow-y-auto').scrollTop = 0; } 
+      else if (App.currentIndex + d >= App.activeTestQuestions.length) toggleModal('modal-confirm-submit', true);
+    }
+    
+    function jumpToQuestionIndex(idx) { App.currentIndex = idx; closeNavigatorDrawer(); renderQuestion(); document.getElementById('view-exam').querySelector('.flex-1.overflow-y-auto').scrollTop = 0; }
+    function toggleNavigatorDrawer() { document.getElementById('navigator-drawer').classList.toggle('hidden'); }
+    function closeNavigatorDrawer() { document.getElementById('navigator-drawer').classList.add('hidden'); }
+    function handleNavigatorFinishClick() { closeNavigatorDrawer(); toggleModal('modal-confirm-submit', true); }
+
+    function renderNavigatorGrid() {
+      const grid = document.getElementById('navigator-buttons-grid');
+      grid.innerHTML = '';
+      App.activeTestQuestions.forEach((q, idx) => {
+        const resp = App.userAnswers[q.id] || {};
+        const isCurrent = (idx === App.currentIndex);
+        const hasAns = (resp.answer && resp.answer.trim().length > 0);
+        const btn = document.createElement('button');
+        btn.onclick = () => jumpToQuestionIndex(idx);
+        let cls = "h-10 rounded text-sm font-bold border transition-colors ";
+        if (isCurrent) cls += "border-black bg-gray-200 text-black ";
+        else if (hasAns) cls += "bg-black text-white border-black ";
+        else cls += "bg-white text-gray-700 border-gray-300 hover:bg-gray-100 ";
+        btn.className = cls;
+        btn.innerHTML = `${idx + 1} ${resp.flagged ? '<span class="ml-1 text-[10px]">🚩</span>' : ''}`;
+        grid.appendChild(btn);
+      });
+    }
+
+    function finishTestAndLog() {
+      clearInterval(App.timerInterval);
+      toggleModal('modal-confirm-submit', false);
+      let answeredCount = 0; let totalTimeSpent = 0;
+      App.activeTestQuestions.forEach(q => { if ((App.userAnswers[q.id]?.answer || '').trim().length > 0) answeredCount++; totalTimeSpent += (App.dwellTimes[q.id] || 0); });
+      document.getElementById('stat-total-q').textContent = App.activeTestQuestions.length;
+      document.getElementById('stat-answered-q').textContent = answeredCount;
+      document.getElementById('stat-time-spent').textContent = `${Math.floor(totalTimeSpent / 60)}m ${totalTimeSpent % 60}s`;
+      renderLogRows(); updateSelfTally();
+      document.getElementById('view-exam').classList.add('hidden'); document.getElementById('view-results').classList.remove('hidden'); window.scrollTo(0,0);
+    }
+
+    function renderLogRows() {
+      const c = document.getElementById('log-entries-container'); c.innerHTML = '';
+      App.activeTestQuestions.forEach((q, i) => {
+        const ans = App.userAnswers[q.id]?.answer || '';
+        const d = App.dwellTimes[q.id] || 0;
+        const state = App.selfVerification[q.id];
+        const row = document.createElement('div');
+        row.className = `p-4 sm:p-5 flex flex-col sm:flex-row justify-between gap-4 transition-colors ${state === 'correct' ? 'bg-green-50' : state === 'wrong' ? 'bg-red-50' : 'bg-white'}`;
+        row.innerHTML = `
+          <div class="flex gap-4 flex-1">
+            <div class="w-8 h-8 rounded border border-gray-300 font-bold text-black flex justify-center items-center text-sm shrink-0 bg-white">${i + 1}</div>
+            <div class="space-y-1 w-full overflow-hidden">
+              <div class="text-sm text-gray-800 line-clamp-2">${escapeHTML(q.prompt)}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 text-sm justify-end shrink-0">
+            <div class="text-center"><div class="text-[10px] text-gray-500 font-bold uppercase">Response</div><div class="font-mono font-bold">${escapeHTML(ans || '-')}</div></div>
+            <div class="flex gap-1 border-l border-gray-200 pl-4">
+               <button onclick="toggleSelfCheck('${q.id}', 'correct')" class="p-2 rounded ${state === 'correct' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-400 hover:text-green-600'}"><i data-lucide="check" class="w-4 h-4"></i></button>
+               <button onclick="toggleSelfCheck('${q.id}', 'wrong')" class="p-2 rounded ${state === 'wrong' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400 hover:text-red-600'}"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+          </div>`;
+        c.appendChild(row);
+      });
+      lucide.createIcons();
+    }
+
+    function toggleSelfCheck(qId, type) { App.selfVerification[qId] = (App.selfVerification[qId] === type) ? null : type; renderLogRows(); updateSelfTally(); }
+    function updateSelfTally() {
+        let c = 0, w = 0;
+        Object.values(App.selfVerification).forEach(v => { if (v === 'correct') c++; if (v === 'wrong') w++; });
+        document.getElementById('self-tally-correct').textContent = `${c} Correct`; document.getElementById('self-tally-wrong').textContent = `${w} Wrong`;
+    }
+
+    function returnToSetupScreen() { clearInterval(App.timerInterval); document.getElementById('view-results').classList.add('hidden'); document.getElementById('view-exam').classList.add('hidden'); document.getElementById('view-home').classList.remove('hidden'); window.scrollTo(0, 0); }
+    function confirmExitTest() { if (confirm("Exit this test? Your answers will be lost.")) returnToSetupScreen(); }
+    function toggleModal(id, show) { const m = document.getElementById(id); if(m) m.classList.toggle('hidden', !show); }
+    function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-message').textContent = msg; t.classList.remove('opacity-0', '-translate-y-24'); setTimeout(() => t.classList.add('opacity-0', '-translate-y-24'), 2500); }
+    
+    function highlightSelection() { 
+        const sel = window.getSelection(); 
+        if (!sel || sel.isCollapsed) return showToast("Select text first to highlight."); 
+        const range = sel.getRangeAt(0); 
+        const mark = document.createElement('span'); 
+        mark.className = 'bluebook-highlight'; 
+        mark.onclick = function() { const p = this.parentNode; while (this.firstChild) p.insertBefore(this.firstChild, this); p.removeChild(this); }; 
+        try { range.surroundContents(mark); sel.removeAllRanges(); } catch(e) {} 
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });
+  </script>
+</body>
+</html>
